@@ -1,0 +1,17 @@
+[package]
+name = "attrimpl"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "The crate provides attributes to automatically implement common traits and reduce boilerplate code."
+repository = "https://github.com/bytifex/attrimpl.git"
+readme = "README.md"
+keywords = ["macro", "traits", "boilerplate", "getter", "setter"]
+
+[dependencies]
+quote = "1.0.40"
+proc-macro2 = "1.0.101"
+syn = { version = "2.0.106", features = ["full"] }
+
+[lib]
+proc-macro = true

@@ -1,0 +1,131 @@
+use quote::quote;
+
+use crate::{directive::Directive, syn_field::SynField};
+
+pub struct SynItemStruct {
+    item_struct: syn::ItemStruct,
+    fields: Vec<SynField>,
+}
+
+impl SynItemStruct {
+    pub fn parse(mut item_struct: syn::ItemStruct) -> syn::Result<Self> {
+        Ok(SynItemStruct {
+            fields: SynField::parse(&mut item_struct.fields)?,
+            item_struct,
+        })
+    }
+}
+
+impl quote::ToTokens for SynItemStruct {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let item_struct = &self.item_struct;
+
+        tokens.extend(quote! {
+            #item_struct
+        });
+
+        for field in &self.fields {
+            for directive in field.directives.iter() {
+                directive_to_tokens(item_struct, &field.field, field.index, directive, tokens);
+            }
+        }
+    }
+}
+
+fn directive_to_tokens(
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    directive: &Directive,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    if *directive == "from" {
+        from_to_tokens(item_struct, field, field_index, tokens);
+    } else if *directive == "into" {
+        into_to_tokens(item_struct, field, field_index, tokens);
+    } else if *directive == "convert" {
+        from_to_tokens(item_struct, field, field_index, tokens);
+        into_to_tokens(item_struct, field, field_index, tokens);
+    } else {
+        panic!(
+            "unsupported directive for struct, directive = {}",
+            directive
+        );
+    }
+}
+
+fn from_to_tokens(
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    _field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let generic_params = &item_struct.generics.params;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    tokens.extend(if let Some(field_ident) = &field.ident {
+        // it is a struct with named fields
+        quote! {
+            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            #where_clause {
+                fn from(value: #field_type) -> Self {
+                    Self {
+                        #field_ident: value,
+                    }
+                }
+            }
+        }
+    } else {
+        // it is a tuple struct
+        quote! {
+            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            #where_clause {
+                fn from(value: #field_type) -> Self {
+                    Self(value)
+                }
+            }
+        }
+    });
+
+    tokens.extend(quote! {
+        impl<#generic_params> ::core::convert::From<#field_type> for ::std::boxed::Box<#ident>
+        #where_clause {
+            fn from(value: #field_type) -> Self {
+                ::std::boxed::Box::new(#ident::from(value))
+            }
+        }
+    });
+}
+
+fn into_to_tokens(
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let generic_params = &item_struct.generics.params;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl<#generic_params> ::core::convert::Into<#field_type> for #ident
+        #where_clause {
+            fn into(self) -> #field_type {
+                self.#field_reference_name
+            }
+        }
+    });
+}
