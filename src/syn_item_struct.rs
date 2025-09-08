@@ -1,6 +1,8 @@
 use quote::quote;
 
-use crate::{directive::Directive, syn_field::SynField};
+use crate::{
+    create_generic_idents, create_generics_for_impl, directive::Directive, syn_field::SynField,
+};
 
 pub struct SynItemStruct {
     item_struct: syn::ItemStruct,
@@ -39,18 +41,70 @@ fn directive_to_tokens(
     directive: &Directive,
     tokens: &mut proc_macro2::TokenStream,
 ) {
+    let generics_for_impl = create_generics_for_impl(&item_struct.generics);
+    let generic_idents = create_generic_idents(&item_struct.generics);
+
     if *directive == "from" {
-        from_to_tokens(item_struct, field, field_index, tokens);
+        from_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else if *directive == "into" {
-        into_to_tokens(item_struct, field, field_index, tokens);
+        into_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else if *directive == "convert" {
-        from_to_tokens(item_struct, field, field_index, tokens);
-        into_to_tokens(item_struct, field, field_index, tokens);
+        from_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+        into_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else if *directive == "deref" {
-        deref_to_tokens(item_struct, field, field_index, tokens);
+        deref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else if *directive == "deref_mut" {
-        deref_to_tokens(item_struct, field, field_index, tokens);
-        deref_mut_to_tokens(item_struct, field, field_index, tokens);
+        deref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+        deref_mut_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else {
         panic!(
             "unsupported directive for struct, directive = {}",
@@ -60,20 +114,21 @@ fn directive_to_tokens(
 }
 
 fn from_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
     field: &syn::Field,
     _field_index: usize,
     tokens: &mut proc_macro2::TokenStream,
 ) {
     let ident = &item_struct.ident;
-    let generic_params = &item_struct.generics.params;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
 
     tokens.extend(if let Some(field_ident) = &field.ident {
         // it is a struct with named fields
         quote! {
-            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            impl #generics_for_impl ::core::convert::From<#field_type> for #ident #generic_idents
             #where_clause {
                 fn from(value: #field_type) -> Self {
                     Self {
@@ -85,7 +140,7 @@ fn from_to_tokens(
     } else {
         // it is a tuple struct
         quote! {
-            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            impl #generics_for_impl ::core::convert::From<#field_type> for #ident #generic_idents
             #where_clause {
                 fn from(value: #field_type) -> Self {
                     Self(value)
@@ -95,7 +150,7 @@ fn from_to_tokens(
     });
 
     tokens.extend(quote! {
-        impl<#generic_params> ::core::convert::From<#field_type> for ::std::boxed::Box<#ident>
+        impl #generics_for_impl ::core::convert::From<#field_type> for ::std::boxed::Box<#ident #generic_idents>
         #where_clause {
             fn from(value: #field_type) -> Self {
                 ::std::boxed::Box::new(#ident::from(value))
@@ -105,13 +160,14 @@ fn from_to_tokens(
 }
 
 fn into_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
     field: &syn::Field,
     field_index: usize,
     tokens: &mut proc_macro2::TokenStream,
 ) {
     let ident = &item_struct.ident;
-    let generic_params = &item_struct.generics.params;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
 
@@ -126,7 +182,7 @@ fn into_to_tokens(
         });
 
     tokens.extend(quote! {
-        impl<#generic_params> ::core::convert::Into<#field_type> for #ident
+        impl #generics_for_impl ::core::convert::Into<#field_type> for #ident #generic_idents
         #where_clause {
             fn into(self) -> #field_type {
                 self.#field_reference_name
@@ -136,13 +192,14 @@ fn into_to_tokens(
 }
 
 fn deref_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
     field: &syn::Field,
     field_index: usize,
     tokens: &mut proc_macro2::TokenStream,
 ) {
     let ident = &item_struct.ident;
-    let generic_params = &item_struct.generics.params;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
 
@@ -157,7 +214,7 @@ fn deref_to_tokens(
         });
 
     tokens.extend(quote! {
-        impl<#generic_params> ::core::ops::Deref for #ident
+        impl #generics_for_impl ::core::ops::Deref for #ident #generic_idents
         #where_clause {
             type Target = #field_type;
 
@@ -169,13 +226,14 @@ fn deref_to_tokens(
 }
 
 fn deref_mut_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
     field: &syn::Field,
     field_index: usize,
     tokens: &mut proc_macro2::TokenStream,
 ) {
     let ident = &item_struct.ident;
-    let generic_params = &item_struct.generics.params;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
 
@@ -190,7 +248,7 @@ fn deref_mut_to_tokens(
         });
 
     tokens.extend(quote! {
-        impl<#generic_params> ::core::ops::DerefMut for #ident
+        impl #generics_for_impl ::core::ops::DerefMut for #ident #generic_idents
         #where_clause {
             fn deref_mut(&mut self) -> &mut #field_type {
                 &mut self.#field_reference_name

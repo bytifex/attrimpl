@@ -10,6 +10,8 @@ Directives that can be added before fields
 - `from`: implements `From` trait for the given type
 - `into`: implements `Into` trait for the given type
 - `convert`: add both `from` and `into` directives for the given field
+- `deref`: implements `Deref` trait for the given type
+- `deref_mut`: implements `Deref` and `DerefMut` traits for the given type
 
 ### Upcoming implementations:
 - Traits

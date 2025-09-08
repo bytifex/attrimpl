@@ -1,6 +1,8 @@
 use quote::quote;
 
-use crate::{directive::Directive, syn_variant::SynVariant};
+use crate::{
+    create_generic_idents, create_generics_for_impl, directive::Directive, syn_variant::SynVariant,
+};
 
 pub struct SynItemEnum {
     item_enum: syn::ItemEnum,
@@ -53,17 +55,38 @@ fn directive_to_tokens(
     directive: &Directive,
     tokens: &mut proc_macro2::TokenStream,
 ) {
+    let generics_for_impl = create_generics_for_impl(&item_enum.generics);
+    let generic_idents = create_generic_idents(&item_enum.generics);
+
     #[allow(clippy::if_same_then_else)]
     if *directive == "from" {
-        from_to_tokens(item_enum, variant, field, field_index, tokens);
+        from_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_enum,
+            variant,
+            field,
+            field_index,
+            tokens,
+        );
     } else if *directive == "convert" {
-        from_to_tokens(item_enum, variant, field, field_index, tokens);
+        from_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_enum,
+            variant,
+            field,
+            field_index,
+            tokens,
+        );
     } else {
         panic!("unsupported directive for enum, directive = {}", directive);
     }
 }
 
 fn from_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
     item_enum: &syn::ItemEnum,
     variant: &SynVariant,
     field: &syn::Field,
@@ -72,14 +95,13 @@ fn from_to_tokens(
 ) {
     let ident = &item_enum.ident;
     let variant_ident = &variant.variant.ident;
-    let generic_params = &item_enum.generics.params;
     let where_clause = item_enum.generics.where_clause.as_ref();
     let field_type = &field.ty;
 
     tokens.extend(if let Some(field_ident) = &field.ident {
         // it is a struct with named fields
         quote! {
-            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            impl #generics_for_impl ::core::convert::From<#field_type> for #ident #generic_idents
             #where_clause {
                 fn from(value: #field_type) -> Self {
                     Self::#variant_ident {
@@ -91,7 +113,7 @@ fn from_to_tokens(
     } else {
         // it is a tuple struct
         quote! {
-            impl<#generic_params> ::core::convert::From<#field_type> for #ident
+            impl #generics_for_impl ::core::convert::From<#field_type> for #ident #generic_idents
             #where_clause {
                 fn from(value: #field_type) -> Self {
                     Self::#variant_ident(value)
@@ -101,7 +123,7 @@ fn from_to_tokens(
     });
 
     tokens.extend(quote! {
-        impl<#generic_params> ::core::convert::From<#field_type> for ::std::boxed::Box<#ident>
+        impl #generics_for_impl ::core::convert::From<#field_type> for ::std::boxed::Box<#ident #generic_idents>
         #where_clause {
             fn from(value: #field_type) -> Self {
                 ::std::boxed::Box::new(#ident::from(value))
