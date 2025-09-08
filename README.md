@@ -13,6 +13,57 @@ The aim of the package is to reduce boilerplate code by adding implementations i
   - `AsMut`
 - Getter methods
 
+## Examples
+Named struct:
+```rust
+#[attrimpl::attrimpl]
+struct NamedStruct {
+    #[attrimpl(from, into)]
+    name: String,
+}
+
+// non-boxed
+let value = NamedStruct::from("test".to_string());
+let value: String = value.into();
+
+// boxed
+let value = Box::<NamedStruct>::from("test".to_string());
+let value: String = (*value).into();
+```
+
+Tuple struct:
+```rust
+#[attrimpl::attrimpl]
+struct TupleStruct(#[attrimpl(from, into)] String);
+
+// non-boxed
+let value = TupleStruct::from("test".to_string());
+let value: String = value.into();
+
+// boxed
+let value = Box::<TupleStruct>::from("test".to_string());
+let value: String = (*value).into();
+```
+
+Enum:
+```rust
+#[attrimpl::attrimpl]
+enum Enum {
+    S(#[attrimpl(convert)] String),
+    U8 {
+        #[attrimpl(from)]
+        byte: u8,
+    },
+    F64(#[attrimpl(convert)] f64),
+}
+
+// non-boxed
+let value = Enum::from("test".to_string());
+
+// boxed
+let value = Box::<Enum>::from("test".to_string());
+```
+
 
 ## Todo
 * handle errors in the package instead of relying on the Rust compiler where possible
