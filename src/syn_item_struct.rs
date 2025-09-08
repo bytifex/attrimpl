@@ -46,6 +46,11 @@ fn directive_to_tokens(
     } else if *directive == "convert" {
         from_to_tokens(item_struct, field, field_index, tokens);
         into_to_tokens(item_struct, field, field_index, tokens);
+    } else if *directive == "deref" {
+        deref_to_tokens(item_struct, field, field_index, tokens);
+    } else if *directive == "deref_mut" {
+        deref_to_tokens(item_struct, field, field_index, tokens);
+        deref_mut_to_tokens(item_struct, field, field_index, tokens);
     } else {
         panic!(
             "unsupported directive for struct, directive = {}",
@@ -125,6 +130,70 @@ fn into_to_tokens(
         #where_clause {
             fn into(self) -> #field_type {
                 self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn deref_to_tokens(
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let generic_params = &item_struct.generics.params;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl<#generic_params> ::core::ops::Deref for #ident
+        #where_clause {
+            type Target = #field_type;
+
+            fn deref(&self) -> &#field_type {
+                &self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn deref_mut_to_tokens(
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let generic_params = &item_struct.generics.params;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl<#generic_params> ::core::ops::DerefMut for #ident
+        #where_clause {
+            fn deref_mut(&mut self) -> &mut #field_type {
+                &mut self.#field_reference_name
             }
         }
     });

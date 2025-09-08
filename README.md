@@ -26,30 +26,34 @@ Directives that can be added before fields
 ```rust
 #[attrimpl::attrimpl]
 struct NamedStruct {
-    #[attrimpl(from, into)]
+    #[attrimpl(from, into, deref_mut)]
     name: String,
 }
 
 // non-boxed
-let value = NamedStruct::from("test".to_string());
+let mut value = NamedStruct::from("test".to_string());
+value.push_str("ing");
 let value: String = value.into();
 
 // boxed
-let value = Box::<NamedStruct>::from("test".to_string());
+let mut value = Box::<NamedStruct>::from("test".to_string());
+value.push_str("ing");
 let value: String = (*value).into();
 ```
 
 **Tuple struct:**
 ```rust
 #[attrimpl::attrimpl]
-struct TupleStruct(#[attrimpl(from, into)] String);
+struct TupleStruct1(#[attrimpl(from, into, deref_mut)] String);
 
 // non-boxed
-let value = TupleStruct::from("test".to_string());
+let mut value = TupleStruct1::from("test".to_string());
+value.push_str("ing");
 let value: String = value.into();
 
 // boxed
-let value = Box::<TupleStruct>::from("test".to_string());
+let mut value = Box::<TupleStruct1>::from("test".to_string());
+value.push_str("ing");
 let value: String = (*value).into();
 ```
 
@@ -75,8 +79,7 @@ let value = Box::<Enum>::from("test".to_string());
 
 ## Todo
 * handle errors in the package instead of relying on the Rust compiler where possible
-* write a proper readme file with examples
-* `#[attrimpl(from)]` has to work with enums
+* examine whether it is possible to implement deref, deref_mut, into, as_ref, as_mut on enums if every variant contains the same type
 * `#[attrimpl(from)]` should work with multiple field structs and enums. Should be able to set the default values of the other fields (e.g., `#[attrimpl(from(field_default | container_default))]`).
 * write test framework for compile time errors
 * write a failing test where non-defined directive is given

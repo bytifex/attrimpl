@@ -1,27 +1,14 @@
-// #[attrimpl::attrimpl]
-// struct Tuple2(
-//     #[attrimpl(from, into)] String,
-//     #[attrimpl(convert)] i32,
-// );
-
-// #[attrimpl::attrimpl]
-// struct Tuple3(String, f64, #[attrimpl(from, into)] String);
-
-// #[attrimpl::attrimpl]
-// struct Tuple3Err(
-//     #[attrimpl(from, into)] String,
-//     #[attrimpl(convert)] f64,
-//     #[attrimpl(from, into)] String,
-// );
-
 #[test]
-fn tuple1() {
+fn tuple_struct_1() {
     #[attrimpl::attrimpl]
-    struct TupleStruct(#[attrimpl(from, into)] String);
+    struct TupleStruct1(#[attrimpl(from, into, deref_mut)] String);
 
-    let s = TupleStruct::from("test".to_string());
-    assert_eq!(s.0, "test".to_string());
+    let mut value = TupleStruct1::from("test".to_string());
+    assert_eq!(value.0, "test".to_string());
 
-    let s: String = s.into();
-    assert_eq!(s, "test");
+    value.push_str("ing");
+    assert_eq!(**value, "testing".to_string());
+
+    let s: String = value.into();
+    assert_eq!(s, "testing");
 }

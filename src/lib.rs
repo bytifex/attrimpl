@@ -18,8 +18,7 @@ const ATTRIBUTE_NAME: &str = "attrimpl";
 const MUTUALLY_EXCLUSIVE_DIRECTIVES: &[(&str, &str)] = &[
     ("convert", "from"),
     ("convert", "into"),
-    ("deref_both", "deref"),
-    ("deref_both", "deref_mut"),
+    ("deref", "deref_mut"),
     ("access", "get_ref"),
     ("access", "get_clone"),
     ("access", "get_mut"),
