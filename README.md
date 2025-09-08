@@ -4,6 +4,14 @@ This package is under construction, handle with care!
 
 # attrimpl
 The aim of the package is to reduce boilerplate code by adding implementations in trivial cases:
+
+## Directives
+Directives that can be added before fields
+- `from`: implements `From` for the given type
+- `into`: implements `Into` for the given type
+- `convert`: add both `from` and `into` directive for the given fields
+
+### Upcoming implementations:
 - Traits
   - `Into`
   - `From`
