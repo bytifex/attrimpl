@@ -7,9 +7,9 @@ The aim of the package is to reduce boilerplate code by adding implementations i
 
 ## Directives
 Directives that can be added before fields
-- `from`: implements `From` for the given type
-- `into`: implements `Into` for the given type
-- `convert`: add both `from` and `into` directive for the given fields
+- `from`: implements `From` trait for the given type
+- `into`: implements `Into` trait for the given type
+- `convert`: add both `from` and `into` directives for the given field
 
 ### Upcoming implementations:
 - Traits
