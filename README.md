@@ -3,7 +3,7 @@ This package is under construction, handle with care!
 
 
 # attrimpl
-The aim of the package is to reduce boilerplate code by adding implementations in trivial cases:
+The aim of the package is to reduce boilerplate code by adding implementations in trivial cases.
 
 ## Directives
 Directives that can be added before fields
@@ -22,7 +22,7 @@ Directives that can be added before fields
 - Getter methods
 
 ## Examples
-Named struct:
+**Named struct:**
 ```rust
 #[attrimpl::attrimpl]
 struct NamedStruct {
@@ -39,7 +39,7 @@ let value = Box::<NamedStruct>::from("test".to_string());
 let value: String = (*value).into();
 ```
 
-Tuple struct:
+**Tuple struct:**
 ```rust
 #[attrimpl::attrimpl]
 struct TupleStruct(#[attrimpl(from, into)] String);
@@ -53,7 +53,7 @@ let value = Box::<TupleStruct>::from("test".to_string());
 let value: String = (*value).into();
 ```
 
-Enum:
+**Enum:**
 ```rust
 #[attrimpl::attrimpl]
 enum Enum {
