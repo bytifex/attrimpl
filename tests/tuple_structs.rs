@@ -17,9 +17,9 @@
 #[test]
 fn tuple1() {
     #[attrimpl::attrimpl]
-    struct Tuple1(#[attrimpl(from, into)] String);
+    struct TupleStruct(#[attrimpl(from, into)] String);
 
-    let s = Tuple1::from("test".to_string());
+    let s = TupleStruct::from("test".to_string());
     assert_eq!(s.0, "test".to_string());
 
     let s: String = s.into();
