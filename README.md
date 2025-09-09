@@ -9,22 +9,21 @@ The aim of the package is to reduce boilerplate code by adding implementations i
 Directives that can be added before fields
 - `from`: implements `From` trait for the given type
 - `into`: implements `Into` trait for the given type
-- `convert`: add both `from` and `into` directives for the given field
+- `convert`: adds both `from` and `into` directives for the given field
 - `deref`: implements `Deref` trait for the given type
 - `deref_mut`: implements `Deref` and `DerefMut` traits for the given type
+- `as_ref`: implements `AsRef` trait for the given type
+- `as_mut`: implements `AsMut` trait for the given type
+- `as`: adds both `as_ref` and `as_mut` directives for the given field
+- `get_ref`: adds a getter method for the field
+- `get_mut`: adds a mutable getter method for the field
+- `get`: adds both `get_ref` and `get_mut` directives for the given field
 
-### Upcoming implementations:
-- Traits
-  - `Into`
-  - `From`
-  - `Deref`
-  - `DerefMut`
-  - `Asref`
-  - `AsMut`
-- Getter methods
+[Naming convention for the getter methods](https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter)
+
 
 ## Examples
-**Named struct:**
+**Named struct (from, into, deref_mut):**
 ```rust
 #[attrimpl::attrimpl]
 struct NamedStruct {
@@ -41,6 +40,49 @@ let value: String = value.into();
 let mut value = Box::<NamedStruct>::from("test".to_string());
 value.push_str("ing");
 let value: String = (*value).into();
+```
+
+**Named struct (into, as_ref, as_mut, get_ref, get_mut):**
+```rust
+#[attrimpl::attrimpl]
+struct NamedStruct {
+    #[attrimpl(into)]
+    #[attrimpl(as_ref, as_mut)]
+    #[attrimpl(get_ref)]
+    name: String,
+
+    #[attrimpl(deref_mut)]
+    #[attrimpl(get)]
+    hobby: String,
+}
+
+let mut value = NamedStruct {
+    name: "Jane Doe".to_string(),
+    hobby: "rock climbing".to_string(),
+};
+
+// deref_mut
+*value = "ice climbing".to_string();
+// deref
+assert_eq!(*value, "ice climbing");
+
+// get_mut
+*value.hobby_mut() = "rock climbing".to_string();
+// get_ref
+assert_eq!(value.hobby(), "rock climbing");
+
+// get_ref
+assert_eq!(value.name(), "Jane Doe");
+
+// as_ref
+assert_eq!(value.as_ref(), "Jane Doe");
+// as_mut
+*value.as_mut() = "John Doe".to_string();
+assert_eq!(value.as_ref(), "John Doe");
+
+// into
+let value: String = value.into();
+assert_eq!(value, "John Doe");
 ```
 
 **Tuple struct:**
@@ -86,20 +128,11 @@ let value = Box::<Enum>::from("test".to_string());
 * write test framework for compile time errors
 * write a failing test where non-defined directive is given
 * implement the following directives
-  * `#[attrimpl(convert)]`
-    * `#[attrimpl(from)]`
-    * `#[attrimpl(into)]`
-  * `#[attrimpl(deref_both)]`
-    * `#[attrimpl(deref)]`
-    * `#[attrimpl(deref_mut)]`
   * `#[access(copy | clone | ref)]`
     * `#[attrimpl(get_ref)]`
     * `#[attrimpl(get_mut)]`
     * `#[attrimpl(get_copy)]`
     * `#[attrimpl(get_clone)]`
-  * `#[attrimpl(as)]`
-    * `#[attrimpl(as_ref)]`
-    * `#[attrimpl(as_mut)]`
   * `#[attrimpl(display("asdasd {}"))]`
   * not sure whether to implement that one: #[attrimpl(borrow)]
   * search for othe possibilities of useful directives

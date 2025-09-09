@@ -13,7 +13,7 @@ fn test_enum() {
     {
         let value = Enum::from("test".to_string());
         match value {
-            Enum::S(s) => assert_eq!(s, "test".to_string()),
+            Enum::S(s) => assert_eq!(s, "test"),
             _ => panic!("expected Enum::S"),
         }
     }

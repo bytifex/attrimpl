@@ -105,6 +105,76 @@ fn directive_to_tokens(
             field_index,
             tokens,
         );
+    } else if *directive == "as_ref" {
+        as_ref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+    } else if *directive == "as_mut" {
+        as_mut_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+    } else if *directive == "as" {
+        as_ref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+        as_mut_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+    } else if *directive == "get_ref" {
+        get_ref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+    } else if *directive == "get_mut" {
+        get_mut_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+    } else if *directive == "get" {
+        get_ref_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
+        get_mut_to_tokens(
+            &generics_for_impl,
+            &generic_idents,
+            item_struct,
+            field,
+            field_index,
+            tokens,
+        );
     } else {
         panic!(
             "unsupported directive for struct, directive = {}",
@@ -251,6 +321,146 @@ fn deref_mut_to_tokens(
         impl #generics_for_impl ::core::ops::DerefMut for #ident #generic_idents
         #where_clause {
             fn deref_mut(&mut self) -> &mut #field_type {
+                &mut self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn as_ref_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl ::core::convert::AsRef<#field_type> for #ident #generic_idents
+        #where_clause {
+            fn as_ref(&self) -> &#field_type {
+                &self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn as_mut_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl ::core::convert::AsMut<#field_type> for #ident #generic_idents
+        #where_clause {
+            fn as_mut(&mut self) -> &mut #field_type {
+                &mut self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn get_ref_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let Some(field_ident) = &field.ident else {
+        panic!("get_ref and get_mut is accepted only on named structs");
+    };
+
+    // field_reference_name is kept here to allow introducing get aliases later
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl #ident #generic_idents
+        #where_clause {
+            pub fn #field_ident(&self) -> &#field_type {
+                &self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn get_mut_to_tokens(
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    let Some(field_ident) = &field.ident else {
+        panic!("get_ref and get_mut is accepted only on named structs");
+    };
+
+    let field_ident = syn::Ident::new(&format!("{}_mut", field_ident), field_ident.span());
+
+    // field_reference_name is kept here to allow introducing get aliases later
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl #ident #generic_idents
+        #where_clause {
+            pub fn #field_ident(&mut self) -> &mut #field_type {
                 &mut self.#field_reference_name
             }
         }
