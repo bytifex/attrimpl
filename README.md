@@ -5,6 +5,7 @@ This package is under construction, handle with care!
 # attrimpl
 The aim of the package is to reduce boilerplate code by adding implementations in trivial cases.
 
+
 ## Directives
 Directives that can be added before fields
 - `from`: implements `From` trait for the given type
@@ -20,6 +21,17 @@ Directives that can be added before fields
 - `get`: adds both `get_ref` and `get_mut` directives for the given field
 
 [Naming convention for the getter methods](https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter)
+
+
+## Debugging
+If the `debug` argument is added to the macro, then the generated code will be printed to stderr during compilation. Example:
+```rust
+#[attrimpl::attrimpl(debug)]
+struct NamedStruct {
+    #[attrimpl(from, into, deref_mut)]
+    name: String,
+}
+```
 
 
 ## Examples
