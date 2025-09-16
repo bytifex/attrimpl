@@ -91,9 +91,6 @@ fn create_generics_for_impl(generics: &syn::Generics) -> syn::Generics {
                 const_param.default = None;
             }
         }
-        if let syn::GenericParam::Type(type_param) = param {
-            type_param.bounds.clear();
-        }
     }
     generics
 }
