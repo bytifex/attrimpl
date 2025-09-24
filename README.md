@@ -134,6 +134,8 @@ let value = Box::<Enum>::from("test".to_string());
 
 
 ## Todo
+* accept only valid directives during parsing (better error handling)
+  * enumize directives
 * handle errors in the package instead of relying on the Rust compiler where possible
 * examine whether it is possible to implement deref, deref_mut, into, as_ref, as_mut on enums if every variant contains the same type
 * `#[attrimpl(from)]` should work with multiple field structs and enums. Should be able to set the default values of the other fields (e.g., `#[attrimpl(from(field_default | container_default))]`).
