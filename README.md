@@ -133,6 +133,12 @@ let value = Box::<Enum>::from("test".to_string());
 ```
 
 
+## Bugs
+* `access` directive is used for mutual exclusion instead of `get`
+  * `get` should be mutually exclusive with `get_ref` and `get_mut`
+  * or `access` should be used instead of `get`
+
+
 ## Todo
 * accept only valid directives during parsing (better error handling)
   * enumize directives
