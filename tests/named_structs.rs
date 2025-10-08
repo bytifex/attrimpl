@@ -25,7 +25,7 @@ fn named_struct_complex() {
         name: String,
 
         #[attrimpl(deref_mut)]
-        #[attrimpl(get)]
+        #[attrimpl(access)]
         hobby: String,
     }
 

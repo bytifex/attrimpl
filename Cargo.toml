@@ -1,6 +1,6 @@
 [package]
 name = "attrimpl"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2024"
 license = "MIT"
 description = "The crate provides attributes to automatically implement common traits and reduce boilerplate code."
@@ -9,7 +9,7 @@ readme = "README.md"
 keywords = ["macro", "traits", "boilerplate", "getter", "setter"]
 
 [dependencies]
-quote = "1.0.40"
+quote = "1.0.41"
 proc-macro2 = "1.0.101"
 syn = { version = "2.0.106", features = ["full"] }
 

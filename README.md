@@ -18,7 +18,7 @@ Directives that can be added before fields
 - `as`: adds both `as_ref` and `as_mut` directives for the given field
 - `get_ref`: adds a getter method for the field
 - `get_mut`: adds a mutable getter method for the field
-- `get`: adds both `get_ref` and `get_mut` directives for the given field
+- `access`: adds both `get_ref` and `get_mut` directives for the given field
 
 [Naming convention for the getter methods](https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter)
 
@@ -131,12 +131,6 @@ let value = Enum::from("test".to_string());
 // boxed
 let value = Box::<Enum>::from("test".to_string());
 ```
-
-
-## Bugs
-* `access` directive is used for mutual exclusion instead of `get`
-  * `get` should be mutually exclusive with `get_ref` and `get_mut`
-  * or `access` should be used instead of `get`
 
 
 ## Todo

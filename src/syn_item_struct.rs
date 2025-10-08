@@ -158,7 +158,7 @@ fn directive_to_tokens(
             field_index,
             tokens,
         );
-    } else if *directive == "get" {
+    } else if *directive == "access" {
         get_ref_to_tokens(
             &generics_for_impl,
             &generic_idents,
