@@ -6,11 +6,15 @@ fn named_struct_convert() {
         name: String,
     }
 
-    // from
+    // from String
     let value = Box::<NamedStruct>::from("test".to_string());
     assert_eq!(value.name, "test");
 
-    // into
+    // Boxed from String
+    let value = Box::<NamedStruct>::from("test".to_string());
+    assert_eq!(value.name, "test");
+
+    // into String
     let value: String = (*value).into();
     assert_eq!(value, "test");
 }
@@ -53,7 +57,7 @@ fn named_struct_complex() {
     *value.as_mut() = "John Doe".to_string();
     assert_eq!(value.as_ref(), "John Doe");
 
-    // into
+    // into from String
     let value: String = value.into();
     assert_eq!(value, "John Doe");
 }

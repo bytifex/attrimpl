@@ -11,6 +11,7 @@ fn test_enum() {
     }
 
     {
+        // from String
         let value = Enum::from("test".to_string());
         match value {
             Enum::S(s) => assert_eq!(s, "test"),
@@ -19,6 +20,7 @@ fn test_enum() {
     }
 
     {
+        // Boxed from u8
         let value = Box::<Enum>::from(42u8);
         match *value {
             Enum::U8 { byte } => assert_eq!(byte, 42u8),
@@ -27,6 +29,7 @@ fn test_enum() {
     }
 
     {
+        // Boxed from f64
         let value = Box::<Enum>::from(3.14f64);
         match *value {
             Enum::F64(f) => assert_eq!(f, 3.14f64),

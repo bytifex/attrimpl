@@ -134,6 +134,24 @@ let value = Box::<Enum>::from("test".to_string());
 
 
 ## Todo
+* consider implementing `from_boxed` directive or (better) `from(boxed)`
+  * 
+  ```rust
+    {
+        // from Box<String>
+        let value = NamedStruct::from(Box::new("test".to_string()));
+        assert_eq!(value.name, "test");
+
+        // Boxed from Box<String>
+        let value = Box::<NamedStruct>::from(Box::new("test".to_string()));
+        assert_eq!(value.name, "test");
+    }
+    {
+        // into Box<String>
+        // Boxed into String
+        // Boxed into Box<String>
+    }
+  ```
 * accept only valid directives during parsing (better error handling)
   * enumize directives
 * handle errors in the package instead of relying on the Rust compiler where possible
