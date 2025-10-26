@@ -15,7 +15,7 @@ impl Directives {
                     directive.span(),
                     format!(
                         "directives `{}` and `{}` are mutually exclusive",
-                        directive, excluded_by,
+                        directive.kind, excluded_by.kind,
                     ),
                 ));
             }
@@ -42,17 +42,17 @@ impl syn::parse::Parse for Directives {
 }
 
 fn excluded_by<'a>(directives: &'a [Directive], directive: &Directive) -> Option<&'a Directive> {
-    // checking for dupications
-    if let Some(directive) = directives.iter().find(|d| **d == *directive) {
+    // checking for duplications
+    if let Some(directive) = directives.iter().find(|d| d.kind == directive.kind) {
         return Some(directive);
     }
 
     // checking for mutually-exclusive directives
     for (a, b) in MUTUALLY_EXCLUSIVE_DIRECTIVES.iter() {
-        if let Some(directive) = directives
-            .iter()
-            .find(|d| (*directive == *a && **d == *b) || (*directive == *b && **d == *a))
-        {
+        if let Some(directive) = directives.iter().find(|d| {
+            (directive.kind.name() == *a && d.kind.name() == *b)
+                || (directive.kind.name() == *b && d.kind.name() == *a)
+        }) {
             return Some(directive);
         }
     }

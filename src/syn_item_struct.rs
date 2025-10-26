@@ -1,7 +1,9 @@
 use quote::quote;
 
 use crate::{
-    create_generic_idents, create_generics_for_impl, directive::Directive, syn_field::SynField,
+    create_generic_idents, create_generics_for_impl,
+    directive::{Directive, DirectiveKind},
+    syn_field::SynField,
 };
 
 pub struct SynItemStruct {
@@ -44,142 +46,149 @@ fn directive_to_tokens(
     let generics_for_impl = create_generics_for_impl(&item_struct.generics);
     let generic_idents = create_generic_idents(&item_struct.generics);
 
-    if *directive == "from" {
-        from_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "into" {
-        into_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "convert" {
-        from_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-        into_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "deref" {
-        deref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "deref_mut" {
-        deref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-        deref_mut_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "as_ref" {
-        as_ref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "as_mut" {
-        as_mut_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "as" {
-        as_ref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-        as_mut_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "get_ref" {
-        get_ref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "get_mut" {
-        get_mut_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "access" {
-        get_ref_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-        get_mut_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_struct,
-            field,
-            field_index,
-            tokens,
-        );
-    } else {
-        panic!(
-            "unsupported directive for struct, directive = {}",
-            directive
-        );
+    match &directive.kind {
+        DirectiveKind::From => {
+            from_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Into => {
+            into_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Convert => {
+            from_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+            into_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Deref => {
+            deref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::DerefMut => {
+            deref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+            deref_mut_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::AsRef => {
+            as_ref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::AsMut => {
+            as_mut_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::As => {
+            as_ref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+            as_mut_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::GetRef => {
+            get_ref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::GetMut => {
+            get_mut_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Access => {
+            get_ref_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+            get_mut_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
     }
 }
 

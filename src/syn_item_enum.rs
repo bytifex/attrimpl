@@ -1,7 +1,9 @@
 use quote::quote;
 
 use crate::{
-    create_generic_idents, create_generics_for_impl, directive::Directive, syn_variant::SynVariant,
+    create_generic_idents, create_generics_for_impl,
+    directive::{Directive, DirectiveKind},
+    syn_variant::SynVariant,
 };
 
 pub struct SynItemEnum {
@@ -58,29 +60,43 @@ fn directive_to_tokens(
     let generics_for_impl = create_generics_for_impl(&item_enum.generics);
     let generic_idents = create_generic_idents(&item_enum.generics);
 
-    #[allow(clippy::if_same_then_else)]
-    if *directive == "from" {
-        from_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_enum,
-            variant,
-            field,
-            field_index,
-            tokens,
-        );
-    } else if *directive == "convert" {
-        from_to_tokens(
-            &generics_for_impl,
-            &generic_idents,
-            item_enum,
-            variant,
-            field,
-            field_index,
-            tokens,
-        );
-    } else {
-        panic!("unsupported directive for enum, directive = {}", directive);
+    match &directive.kind {
+        DirectiveKind::From => {
+            from_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_enum,
+                variant,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Convert => {
+            from_to_tokens(
+                &generics_for_impl,
+                &generic_idents,
+                item_enum,
+                variant,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Into
+        | DirectiveKind::GetRef
+        | DirectiveKind::GetMut
+        | DirectiveKind::Access
+        | DirectiveKind::AsRef
+        | DirectiveKind::AsMut
+        | DirectiveKind::As
+        | DirectiveKind::Deref
+        | DirectiveKind::DerefMut => {
+            panic!(
+                "unsupported directive for enum, directive = {}",
+                directive.kind
+            );
+        }
     }
 }
 
