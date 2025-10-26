@@ -152,8 +152,7 @@ let value = Box::<Enum>::from("test".to_string());
         // Boxed into Box<String>
     }
   ```
-* accept only valid directives during parsing (better error handling)
-  * enumize directives
+* accept only valid directives during parsing for the given item type (e.g., for enums no Deref or DerefMut should be accepted) (better error handling)
 * handle errors in the package instead of relying on the Rust compiler where possible
 * examine whether it is possible to implement deref, deref_mut, into, as_ref, as_mut on enums if every variant contains the same type
 * `#[attrimpl(from)]` should work with multiple field structs and enums. Should be able to set the default values of the other fields (e.g., `#[attrimpl(from(field_default | container_default))]`).
