@@ -84,9 +84,11 @@ fn directive_to_tokens(
             );
         }
         DirectiveKind::Into
-        | DirectiveKind::GetRef
-        | DirectiveKind::GetMut
-        | DirectiveKind::Access
+        | DirectiveKind::GetRef(_)
+        | DirectiveKind::GetCopy(_)
+        | DirectiveKind::GetClone(_)
+        | DirectiveKind::GetMut(_)
+        | DirectiveKind::Access(_)
         | DirectiveKind::AsRef
         | DirectiveKind::AsMut
         | DirectiveKind::As

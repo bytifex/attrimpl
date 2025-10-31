@@ -61,3 +61,95 @@ fn named_struct_complex() {
     let value: String = value.into();
     assert_eq!(value, "John Doe");
 }
+
+#[test]
+fn named_struct_access() {
+    #[attrimpl::attrimpl]
+    struct NamedStruct {
+        #[attrimpl(
+            get_ref,
+            get_mut,
+            get_ref(name = "a"),
+            get_clone(name = "b"),
+            access(name = "c"),
+            access(name = "d", get_ref),
+            access(name = "e", get_clone)
+        )]
+        name: String,
+
+        #[attrimpl(
+            get_ref,
+            get_mut,
+            get_ref(name = "f"),
+            get_clone(name = "g"),
+            get_copy(name = "h"),
+            access(name = "i"),
+            access(name = "j", get_ref),
+            access(name = "k", get_clone),
+            access(name = "l", get_copy)
+        )]
+        value: usize,
+    }
+
+    let mut value = NamedStruct {
+        name: "test".to_string(),
+        value: 42,
+    };
+
+    // String accessors
+    // get_ref without parameters
+    let _r: &String = value.name();
+
+    // get_mut without parameters
+    let _r: &mut String = value.name_mut();
+
+    // get_ref
+    let _r: &String = value.a();
+
+    // get_clone
+    let _r: String = value.b();
+
+    // access
+    let _r: &String = value.c();
+    let _r: &mut String = value.c_mut();
+
+    // access with get_ref
+    let _r: &String = value.d();
+    let _r: &mut String = value.d_mut();
+
+    // access with get_clone
+    let _r: String = value.e();
+    let _r: &mut String = value.e_mut();
+
+    // usize accessors
+    // get_ref without parameters
+    let _r: &usize = value.value();
+
+    // get_mut without parameters
+    let _r: &mut usize = value.value_mut();
+
+    // get_ref
+    let _r: &usize = value.f();
+
+    // get_clone
+    let _r: usize = value.g();
+
+    // get_copy
+    let _r: usize = value.h();
+
+    // access
+    let _r: &usize = value.i();
+    let _r: &mut usize = value.i_mut();
+
+    // access with get_ref
+    let _r: &usize = value.j();
+    let _r: &mut usize = value.j_mut();
+
+    // access with get_clone
+    let _r: usize = value.k();
+    let _r: &mut usize = value.k_mut();
+
+    // access with get_copy
+    let _r: usize = value.l();
+    let _r: &mut usize = value.l_mut();
+}

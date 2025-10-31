@@ -1,6 +1,6 @@
 use syn::punctuated::Punctuated;
 
-use crate::{MUTUALLY_EXCLUSIVE_DIRECTIVES, directive::Directive};
+use crate::directive::Directive;
 
 #[derive(Default)]
 pub struct Directives {
@@ -31,9 +31,26 @@ impl Directives {
     }
 }
 
-impl syn::parse::Parse for Directives {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let directives = Punctuated::<Directive, syn::Token![,]>::parse_terminated(input)?;
+impl Directives {
+    pub fn parse(
+        input: syn::parse::ParseStream,
+        default_name: Option<syn::Ident>,
+    ) -> syn::Result<Self> {
+        // the code below is copied from syn::punctuated::Punctuated::parse_terminated
+        let mut directives = Punctuated::new();
+
+        loop {
+            if input.is_empty() {
+                break;
+            }
+            let value = Directive::parse(input, default_name.clone())?;
+            directives.push_value(value);
+            if input.is_empty() {
+                break;
+            }
+            let punct = input.parse::<syn::Token![,]>()?;
+            directives.push_punct(punct);
+        }
 
         Ok(Directives {
             directives: directives.into_iter().collect(),
@@ -42,19 +59,12 @@ impl syn::parse::Parse for Directives {
 }
 
 fn excluded_by<'a>(directives: &'a [Directive], directive: &Directive) -> Option<&'a Directive> {
-    // checking for duplications
-    if let Some(directive) = directives.iter().find(|d| d.kind == directive.kind) {
+    // checking for directive conflicts
+    if let Some(directive) = directives
+        .iter()
+        .find(|d| d.kind.is_conflicted_with(&directive.kind))
+    {
         return Some(directive);
-    }
-
-    // checking for mutually-exclusive directives
-    for (a, b) in MUTUALLY_EXCLUSIVE_DIRECTIVES.iter() {
-        if let Some(directive) = directives.iter().find(|d| {
-            (directive.kind.name() == *a && d.kind.name() == *b)
-                || (directive.kind.name() == *b && d.kind.name() == *a)
-        }) {
-            return Some(directive);
-        }
     }
 
     None

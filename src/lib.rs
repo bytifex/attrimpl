@@ -1,6 +1,9 @@
+mod access_params;
 mod args;
 mod directive;
 mod directives;
+mod get_mut_params;
+mod get_params;
 mod item;
 mod syn_field;
 mod syn_item_enum;
@@ -14,18 +17,6 @@ use syn::{punctuated::Punctuated, token};
 use crate::{args::Args, item::Item};
 
 const ATTRIBUTE_NAME: &str = "attrimpl";
-
-const MUTUALLY_EXCLUSIVE_DIRECTIVES: &[(&str, &str)] = &[
-    ("convert", "from"),
-    ("convert", "into"),
-    ("deref", "deref_mut"),
-    ("access", "get_ref"),
-    ("access", "get_clone"),
-    ("access", "get_mut"),
-    ("access", "get_copy"),
-    ("as", "as_ref"),
-    ("as", "as_mut"),
-];
 
 fn are_path_segments_equal(
     punctuated: &Punctuated<syn::PathSegment, token::PathSep>,

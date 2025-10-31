@@ -16,11 +16,24 @@ Directives that can be added before fields
 - `as_ref`: implements `AsRef` trait for the given type
 - `as_mut`: implements `AsMut` trait for the given type
 - `as`: adds both `as_ref` and `as_mut` directives for the given field
-- `get_ref`: adds a getter method for the field
+- `get_ref`: adds a getter method for the field, a reference is returned
+  - accepted params
+    - `name`: specifies the name of the getter function, default value is `<field_name>` (e.g., `get_ref(name = "foobar")`)
+- `get_clone`: adds a getter method for the field, the value is cloned
+  - accepted params
+    - `name`: specifies the name of the getter function, default value is `<field_name>` (e.g., `get_clone(name = "foobar")`)
+- `get_copy`: adds a getter method for the field, the value is copied
+  - accepted params
+    - `name`: specifies the name of the getter function, default value is `<field_name>` (e.g., `get_copy(name = "foobar")`)
 - `get_mut`: adds a mutable getter method for the field
+  - accepted params
+    - `name`: specifies the name of the getter function (`<name>_mut`), default value is `<field_name>_mut` (e.g., `get_mut(name = "foobar")`)
 - `access`: adds both `get_ref` and `get_mut` directives for the given field
-
-[Naming convention for the getter methods](https://rust-lang.github.io/api-guidelines/naming.html#getter-names-follow-rust-convention-c-getter)
+  - accepted params
+    - `name`: specifies the name of both the getter and the get_mut function (e.g., `access(name = "foobar")`)
+    - `get_ref`: specifies the type of the getter function, this is the default
+    - `get_clone`: specifies the type of the getter function
+    - `get_copy`: specifies the type of the getter function
 
 
 ## Debugging
@@ -64,7 +77,7 @@ struct NamedStruct {
     name: String,
 
     #[attrimpl(deref_mut)]
-    #[attrimpl(get)]
+    #[attrimpl(access(name = "hobbyy"))]
     hobby: String,
 }
 
@@ -78,10 +91,9 @@ let mut value = NamedStruct {
 // deref
 assert_eq!(*value, "ice climbing");
 
-// get_mut
-*value.hobby_mut() = "rock climbing".to_string();
-// get_ref
-assert_eq!(value.hobby(), "rock climbing");
+// access(name = "hobbyy")
+*value.hobbyy_mut() = "rock climbing".to_string();
+assert_eq!(value.hobbyy(), "rock climbing");
 
 // get_ref
 assert_eq!(value.name(), "Jane Doe");
@@ -159,11 +171,6 @@ let value = Box::<Enum>::from("test".to_string());
 * write test framework for compile time errors
 * write a failing test where non-defined directive is given
 * implement the following directives
-  * `#[access(copy | clone | ref)]`
-    * `#[attrimpl(get_ref)]`
-    * `#[attrimpl(get_mut)]`
-    * `#[attrimpl(get_copy)]`
-    * `#[attrimpl(get_clone)]`
   * `#[attrimpl(display("asdasd {}"))]`
   * not sure whether to implement that one: #[attrimpl(borrow)]
-  * search for othe possibilities of useful directives
+  * search for other possibilities of useful directives

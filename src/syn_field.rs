@@ -19,7 +19,12 @@ impl SynField {
 
                 if let syn::Meta::List(attr) = &attr.meta {
                     if are_path_segments_equal(&attr.path.segments, &[ATTRIBUTE_NAME]) {
-                        let tmp: Directives = syn::parse2(attr.tokens.clone())?;
+                        let tmp = syn::parse::Parser::parse2(
+                            |input: syn::parse::ParseStream<'_>| {
+                                Directives::parse(input, field.ident.clone())
+                            },
+                            attr.tokens.clone(),
+                        )?;
                         directives.extend_from(tmp)?;
 
                         field.attrs.swap_remove(i);

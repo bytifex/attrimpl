@@ -1,6 +1,7 @@
 use quote::quote;
 
 use crate::{
+    access_params::GetRefType,
     create_generic_idents, create_generics_for_impl,
     directive::{Directive, DirectiveKind},
     syn_field::SynField,
@@ -151,8 +152,9 @@ fn directive_to_tokens(
                 tokens,
             );
         }
-        DirectiveKind::GetRef => {
+        DirectiveKind::GetRef(params) => {
             get_ref_to_tokens(
+                &params.name,
                 &generics_for_impl,
                 &generic_idents,
                 item_struct,
@@ -161,8 +163,9 @@ fn directive_to_tokens(
                 tokens,
             );
         }
-        DirectiveKind::GetMut => {
-            get_mut_to_tokens(
+        DirectiveKind::GetCopy(params) => {
+            get_copy_to_tokens(
+                &params.name,
                 &generics_for_impl,
                 &generic_idents,
                 item_struct,
@@ -171,8 +174,9 @@ fn directive_to_tokens(
                 tokens,
             );
         }
-        DirectiveKind::Access => {
-            get_ref_to_tokens(
+        DirectiveKind::GetClone(params) => {
+            get_clone_to_tokens(
+                &params.name,
                 &generics_for_impl,
                 &generic_idents,
                 item_struct,
@@ -180,7 +184,51 @@ fn directive_to_tokens(
                 field_index,
                 tokens,
             );
+        }
+        DirectiveKind::GetMut(params) => {
             get_mut_to_tokens(
+                &params.name,
+                &generics_for_impl,
+                &generic_idents,
+                item_struct,
+                field,
+                field_index,
+                tokens,
+            );
+        }
+        DirectiveKind::Access(params) => {
+            match params.get_ref_type {
+                GetRefType::Ref => get_ref_to_tokens(
+                    &params.get_name,
+                    &generics_for_impl,
+                    &generic_idents,
+                    item_struct,
+                    field,
+                    field_index,
+                    tokens,
+                ),
+                GetRefType::Clone => get_clone_to_tokens(
+                    &params.get_name,
+                    &generics_for_impl,
+                    &generic_idents,
+                    item_struct,
+                    field,
+                    field_index,
+                    tokens,
+                ),
+                GetRefType::Copy => get_copy_to_tokens(
+                    &params.get_name,
+                    &generics_for_impl,
+                    &generic_idents,
+                    item_struct,
+                    field,
+                    field_index,
+                    tokens,
+                ),
+            }
+
+            get_mut_to_tokens(
+                &params.get_mut_name,
                 &generics_for_impl,
                 &generic_idents,
                 item_struct,
@@ -401,6 +449,7 @@ fn as_mut_to_tokens(
 }
 
 fn get_ref_to_tokens(
+    fn_name: &syn::Ident,
     generics_for_impl: &syn::Generics,
     generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
@@ -411,10 +460,6 @@ fn get_ref_to_tokens(
     let ident = &item_struct.ident;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
-
-    let Some(field_ident) = &field.ident else {
-        panic!("get_ref and get_mut is accepted only on named structs");
-    };
 
     // field_reference_name is kept here to allow introducing get aliases later
     let field_reference_name = field
@@ -430,14 +475,15 @@ fn get_ref_to_tokens(
     tokens.extend(quote! {
         impl #generics_for_impl #ident #generic_idents
         #where_clause {
-            pub fn #field_ident(&self) -> &#field_type {
+            pub fn #fn_name(&self) -> &#field_type {
                 &self.#field_reference_name
             }
         }
     });
 }
 
-fn get_mut_to_tokens(
+fn get_clone_to_tokens(
+    fn_name: &syn::Ident,
     generics_for_impl: &syn::Generics,
     generic_idents: &syn::Generics,
     item_struct: &syn::ItemStruct,
@@ -448,12 +494,6 @@ fn get_mut_to_tokens(
     let ident = &item_struct.ident;
     let where_clause = item_struct.generics.where_clause.as_ref();
     let field_type = &field.ty;
-
-    let Some(field_ident) = &field.ident else {
-        panic!("get_ref and get_mut is accepted only on named structs");
-    };
-
-    let field_ident = syn::Ident::new(&format!("{}_mut", field_ident), field_ident.span());
 
     // field_reference_name is kept here to allow introducing get aliases later
     let field_reference_name = field
@@ -469,7 +509,75 @@ fn get_mut_to_tokens(
     tokens.extend(quote! {
         impl #generics_for_impl #ident #generic_idents
         #where_clause {
-            pub fn #field_ident(&mut self) -> &mut #field_type {
+            pub fn #fn_name(&self) -> #field_type {
+                ::std::clone::Clone::clone(&self.#field_reference_name)
+            }
+        }
+    });
+}
+
+fn get_copy_to_tokens(
+    fn_name: &syn::Ident,
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    // field_reference_name is kept here to allow introducing get aliases later
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl #ident #generic_idents
+        #where_clause {
+            pub fn #fn_name(&self) -> #field_type {
+                self.#field_reference_name
+            }
+        }
+    });
+}
+
+fn get_mut_to_tokens(
+    fn_name: &syn::Ident,
+    generics_for_impl: &syn::Generics,
+    generic_idents: &syn::Generics,
+    item_struct: &syn::ItemStruct,
+    field: &syn::Field,
+    field_index: usize,
+    tokens: &mut proc_macro2::TokenStream,
+) {
+    let ident = &item_struct.ident;
+    let where_clause = item_struct.generics.where_clause.as_ref();
+    let field_type = &field.ty;
+
+    // field_reference_name is kept here to allow introducing get aliases later
+    let field_reference_name = field
+        .ident
+        .as_ref()
+        .map(|ident| quote! { #ident })
+        .clone()
+        .unwrap_or_else(|| {
+            let field_index = syn::Index::from(field_index);
+            quote! { #field_index }
+        });
+
+    tokens.extend(quote! {
+        impl #generics_for_impl #ident #generic_idents
+        #where_clause {
+            pub fn #fn_name(&mut self) -> &mut #field_type {
                 &mut self.#field_reference_name
             }
         }
